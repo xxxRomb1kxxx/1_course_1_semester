@@ -1,0 +1,117 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+#include <random>
+const int skip_amount = 3;
+const int modifier = 2;
+std::string encrypt_text(const std::string& text, int key) {
+    std::string encryptedText = "";
+    for (int i = 0; i < text.length(); i++) {
+        char c = text[i];
+        if (c >= 'a' && c <= 'z') {
+            c = 'a' + (c - 'a' + key) % 26;
+        }
+        else if (c >= 'A' && c <= 'Z') {
+            c = 'A' + (c - 'A' + key) % 26;
+        }
+        else {
+            c = 32 + (c - 32 + key) % 32;
+        }
+        encryptedText += c;
+    }
+    return encryptedText;
+}
+std::string decrypt_text(const std::string& text, int key) {
+    std::string decryptedText = "";
+    for (int i = 0; i < text.length(); i++) {
+        char c = text[i];
+        if (c >= 'A' && c <= 'Z') {
+            c = 'A' + ((c - 'A' - key + 26) % 26);
+        }
+        else if (c >= 'a' && c <= 'z') {
+            c = 'a' + ((c - 'a' - key + 26) % 26);
+        }
+        else {
+            c = 32 + ((c - 32 - key + 32) % 32);
+        }
+        decryptedText += c;
+    }
+    return decryptedText;
+}
+std::string insert_random_chars(const std::string& text, int numChars) {
+    std::string modifiedText = "";
+    modifiedText += text[0];
+    for (int i = 1; i < text.length(); i++) {
+        modifiedText += text[i];
+        if (i % skip_amount == 2) {
+            for (int j = 0; j < numChars; j++) {
+                modifiedText += static_cast<char>(rand() % 26 + 97);
+            }
+        }
+    }
+    return modifiedText;
+}
+std::string remove_random_chars(const std::string& text, int numChars) {
+    std::string modifiedText = "";
+    int k = 1;
+    modifiedText += text[0];
+    for (int i = 1; i < text.length(); i++) {
+        if (k % skip_amount == 0 && k > 0) {
+            for (int j = 0; j < numChars - 1; j++) {
+                i++;
+            }
+            k = -1;
+        }
+        else {
+            modifiedText += text[i];
+        }
+        k++;
+    }
+    return modifiedText;
+}
+
+int main() {
+    std::ifstream inputFile("total_secret.txt");
+    if (!inputFile) {
+        std::cout << "Boss, file is boolshit!" << std::endl;
+        return 0;
+    }
+
+    std::string text;
+    std::getline(inputFile, text);
+    inputFile.close();
+
+    std::cout << "Select the operating mode: " << std::endl;
+    std::cout << "1. Encrypt" << std::endl;
+    std::cout << "2. Decrypt" << std::endl;
+    int mode;
+    std::cin >> mode;
+
+    std::cout << "key: ";
+    int key;
+    std::cin >> key;
+
+    std::string result;
+    std::string tmp_result;
+    if (mode == 1) {
+        tmp_result = encrypt_text(text, key);
+        result = insert_random_chars(tmp_result, modifier);
+    }
+    else if (mode == 2) {
+        tmp_result = remove_random_chars(text, modifier);
+        result = decrypt_text(tmp_result, key);
+    }
+    else {
+        std::cout << "Error" << std::endl;
+        return 0;
+    }
+    std::ofstream outputFile("output.txt");
+    if (!outputFile) {
+        std::cout << "Error" << std::endl;
+        return 0;
+    }
+    outputFile << result;
+    outputFile.close();
+    return 0;
+}
